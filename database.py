@@ -132,3 +132,10 @@ async def get_survey_stats(survey_id: int) -> dict:
         )
         answers = await cursor.fetchall()
         return {"total_users": total_users, "answers": answers}
+        
+async def delete_survey(survey_id: int) -> None:
+    async with aiosqlite.connect(DB_NAME) as db:
+        await db.execute("DELETE FROM questions WHERE survey_id = ?", (survey_id,))
+        await db.execute("DELETE FROM answers WHERE survey_id = ?", (survey_id,))
+        await db.execute("DELETE FROM surveys WHERE id = ?", (survey_id,))
+        await db.commit()
