@@ -4,28 +4,27 @@ DB_NAME = "surveys.db"
 
 async def init_db():
     async with aiosqlite.connect(DB_NAME) as db:
-        # Таблица опросов
         await db.execute("""
             CREATE TABLE IF NOT EXISTS surveys (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 title TEXT NOT NULL,
                 creator_id INTEGER NOT NULL,
-                created_at TEXT NOT NULL
+                created_at TEXT NOT NULL,
+                photo TEXT
             )
         """)
-        # Таблица вопросов
         await db.execute("""
             CREATE TABLE IF NOT EXISTS questions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 survey_id INTEGER NOT NULL,
                 text TEXT NOT NULL,
-                q_type TEXT NOT NULL, -- text, yesno, choice
-                options TEXT, -- для choice: варианты через запятую
+                q_type TEXT NOT NULL,
+                options TEXT,
                 position INTEGER NOT NULL,
+                photo TEXT,
                 FOREIGN KEY (survey_id) REFERENCES surveys(id)
             )
         """)
-        # Таблица ответов
         await db.execute("""
             CREATE TABLE IF NOT EXISTS answers (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,13 +64,22 @@ async def get_survey(survey_id: int):
 # --- Вопросы ---
 
 async def add_questions(survey_id: int, questions: list) -> None:
-    """questions: список кортежей (text, q_type, options, position)"""
     async with aiosqlite.connect(DB_NAME) as db:
         for pos, q in enumerate(questions):
             text, q_type, options = q
             await db.execute(
                 "INSERT INTO questions (survey_id, text, q_type, options, position) VALUES (?, ?, ?, ?, ?)",
                 (survey_id, text, q_type, options, pos + 1)
+            )
+        await db.commit()
+
+async def add_questions_with_photos(survey_id: int, questions: list) -> None:
+    async with aiosqlite.connect(DB_NAME) as db:
+        for pos, q in enumerate(questions):
+            text, q_type, options, photo = q
+            await db.execute(
+                "INSERT INTO questions (survey_id, text, q_type, options, photo, position) VALUES (?, ?, ?, ?, ?, ?)",
+                (survey_id, text, q_type, options, photo, pos + 1)
             )
         await db.commit()
 
@@ -117,22 +125,19 @@ async def has_user_completed(user_id: int, survey_id: int) -> bool:
 
 async def get_survey_stats(survey_id: int) -> dict:
     async with aiosqlite.connect(DB_NAME) as db:
-        # Количество прошедших
         cursor = await db.execute(
             "SELECT COUNT(DISTINCT user_id) FROM answers WHERE survey_id = ?",
             (survey_id,)
         )
         row = await cursor.fetchone()
         total_users = row[0] if row else 0
-
-        # Ответы по вопросам
         cursor = await db.execute(
             "SELECT q.text, a.answer_text FROM answers a JOIN questions q ON a.question_id = q.id WHERE a.survey_id = ?",
             (survey_id,)
         )
         answers = await cursor.fetchall()
         return {"total_users": total_users, "answers": answers}
-        
+
 async def delete_survey(survey_id: int) -> None:
     async with aiosqlite.connect(DB_NAME) as db:
         await db.execute("DELETE FROM questions WHERE survey_id = ?", (survey_id,))
