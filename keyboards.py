@@ -10,7 +10,7 @@ main_menu = ReplyKeyboardMarkup(
 
 admin_menu = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="Создать опрос"), KeyboardButton(text="Статистика")],
+        [KeyboardButton(text="Создать опрос"), KeyboardButton(text="Статистика"), KeyboardButton(text="Удалить опрос")],
         [KeyboardButton(text="Главное меню")],
     ],
     resize_keyboard=True
