@@ -1,6 +1,6 @@
 import asyncio
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from keyboards import admin_menu, main_menu, surveys_inline
@@ -10,7 +10,7 @@ router = Router()
 
 class AdminCreate(StatesGroup):
     waiting_title = State()
-    building = State()  # Ждём кнопок "Добавить вопрос" / "Готово"
+    building = State()
     adding_question_text = State()
     adding_yesno = State()
     adding_choice_options = State()
@@ -18,12 +18,12 @@ class AdminCreate(StatesGroup):
 @router.message(F.text == "Админ-панель")
 async def admin_panel(message: Message, state: FSMContext):
     await state.clear()
-    await message.answer("⚙️ Админ-панель", reply_markup=admin_menu)
+    await message.answer("⚙️ <b>Админ-панель</b>\n\nВыберите действие:", reply_markup=admin_menu)
 
 @router.message(F.text == "Создать опрос")
 async def create_survey_start(message: Message, state: FSMContext):
     await state.set_state(AdminCreate.waiting_title)
-    await message.answer("Введите название опроса:")
+    await message.answer("📝 Введите <b>название</b> опроса:")
 
 @router.message(AdminCreate.waiting_title)
 async def create_survey_title(message: Message, state: FSMContext):
@@ -32,10 +32,9 @@ async def create_survey_title(message: Message, state: FSMContext):
     await show_builder_menu(message)
 
 async def show_builder_menu(message: Message):
-    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-    data = await message.from_user.state.get_data() if hasattr(message.from_user, 'state') else {}
+    data = await state.get_data()
     questions = data.get("questions", [])
-    text = f"📝 Создание опроса «{data.get('title', '')}»\nВопросов: {len(questions)}\n\nДобавьте вопрос:"
+    text = f"📝 <b>Создание опроса «{data.get('title', '')}»</b>\n\n✅ Вопросов: {len(questions)}\n\nДобавьте вопрос:"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="📝 Текстовый", callback_data="add_text")],
         [InlineKeyboardButton(text="✅ Да/Нет", callback_data="add_yesno")],
@@ -47,7 +46,7 @@ async def show_builder_menu(message: Message):
 @router.callback_query(AdminCreate.building, F.data == "add_text")
 async def add_text_q(callback: CallbackQuery, state: FSMContext):
     await state.set_state(AdminCreate.adding_question_text)
-    await callback.message.answer("Введите текст вопроса:")
+    await callback.message.answer("📝 Введите текст вопроса:")
     await callback.answer()
 
 @router.message(AdminCreate.adding_question_text)
@@ -62,7 +61,7 @@ async def got_text_q(message: Message, state: FSMContext):
 @router.callback_query(AdminCreate.building, F.data == "add_yesno")
 async def add_yesno_q(callback: CallbackQuery, state: FSMContext):
     await state.set_state(AdminCreate.adding_yesno)
-    await callback.message.answer("Введите текст вопроса (Да/Нет):")
+    await callback.message.answer("✅ Введите текст вопроса (Да/Нет):")
     await callback.answer()
 
 @router.message(AdminCreate.adding_yesno)
@@ -77,14 +76,14 @@ async def got_yesno_q(message: Message, state: FSMContext):
 @router.callback_query(AdminCreate.building, F.data == "add_choice")
 async def add_choice_q(callback: CallbackQuery, state: FSMContext):
     await state.set_state(AdminCreate.adding_choice_options)
-    await callback.message.answer("Введите текст вопроса и варианты ответа через запятую:\n\n<i>Пример: Любимый цвет?, Красный, Синий, Зелёный</i>")
+    await callback.message.answer("🔘 Введите вопрос и варианты через запятую:\n\n<i>Пример: Любимый цвет?, Красный, Синий</i>")
     await callback.answer()
 
 @router.message(AdminCreate.adding_choice_options)
 async def got_choice_q(message: Message, state: FSMContext):
     parts = message.text.split(",")
     if len(parts) < 2:
-        await message.answer("Нужно указать вопрос и хотя бы один вариант через запятую.")
+        await message.answer("⚠️ Нужно указать вопрос и хотя бы один вариант через запятую.")
         return
     q_text = parts[0].strip()
     options = [o.strip() for o in parts[1:]]
@@ -101,7 +100,7 @@ async def finish_building(callback: CallbackQuery, state: FSMContext):
     title = data.get("title")
     questions = data.get("questions", [])
     if not questions:
-        await callback.answer("Добавьте хотя бы один вопрос!")
+        await callback.answer("⚠️ Добавьте хотя бы один вопрос!")
         return
     survey_id = await create_survey(title, callback.from_user.id)
     for q in questions:
@@ -112,16 +111,34 @@ async def finish_building(callback: CallbackQuery, state: FSMContext):
             await add_questions(survey_id, [(q[1], q[0], None, 0)])
     await state.clear()
     await callback.message.answer(
-        f"✅ Опрос «{title}» создан! ({len(questions)} вопросов)\nПользователи могут пройти его через кнопку «Пройти опрос».",
+        f"🎉 <b>Опрос «{title}» создан!</b>\n\n✅ Вопросов: {len(questions)}\n📊 Пройти: кнопка «Пройти опрос»",
         reply_markup=admin_menu
     )
     await callback.answer()
 
-@router.message(F.text == "Статистика")
-async def stats_list(message: Message, state: FSMContext):
+@router.message(F.text == "Удалить опрос")
+async def delete_survey_start(message: Message):
     surveys = await get_surveys()
     if not surveys:
-        await message.answer("Нет созданных опросов.")
+        await message.answer("📭 Нет опросов для удаления.")
+        return
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=s[1], callback_data=f"del_{s[0]}")] for s in surveys
+    ])
+    await message.answer("🗑 Выберите опрос для удаления:", reply_markup=kb)
+
+@router.callback_query(F.data.startswith("del_"))
+async def delete_survey_confirm(callback: CallbackQuery):
+    survey_id = int(callback.data.split("_")[1])
+    await delete_survey(survey_id)
+    await callback.message.edit_text("✅ Опрос удалён.")
+    await callback.answer()
+
+@router.message(F.text == "Статистика")
+async def stats_list(message: Message):
+    surveys = await get_surveys()
+    if not surveys:
+        await message.answer("📊 Нет созданных опросов.")
         return
     text = "📊 <b>Статистика опросов:</b>\n\n"
     for s in surveys:
