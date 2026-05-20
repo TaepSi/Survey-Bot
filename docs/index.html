@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>SurveyBot — интерактивные опросы</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Segoe UI, sans-serif;
+}
+
+body{
+    background: radial-gradient(circle at 20% 20%, #4ea8ff33, transparent 40%),
+                radial-gradient(circle at 80% 80%, #a855f733, transparent 40%),
+                #0b0f1a;
+
+    color:white;
+    overflow:hidden;
+}
+
+/* glow blobs */
+.blob{
+    position:absolute;
+    width:400px;
+    height:400px;
+    border-radius:50%;
+    filter:blur(120px);
+    opacity:0.4;
+    animation: float 8s ease-in-out infinite;
+}
+
+.blob:nth-child(1){
+    background:#4ea8ff;
+    top:-100px;
+    left:-100px;
+}
+
+.blob:nth-child(2){
+    background:#a855f7;
+    bottom:-120px;
+    right:-120px;
+    animation-delay:2s;
+}
+
+@keyframes float{
+    0%,100%{ transform:translateY(0px); }
+    50%{ transform:translateY(30px); }
+}
+
+/* layout */
+.wrapper{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+    position:relative;
+    z-index:2;
+}
+
+/* phone mock */
+.phone{
+    width:360px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:30px;
+    padding:20px;
+    backdrop-filter:blur(20px);
+    box-shadow:0 30px 80px rgba(0,0,0,0.6);
+}
+
+.header{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:20px;
+}
+
+.avatar{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#4ea8ff,#a855f7);
+}
+
+.title{
+    font-weight:700;
+}
+
+.subtitle{
+    font-size:12px;
+    color:#aab2c5;
+}
+
+/* chat bubbles */
+.msg{
+    padding:12px 14px;
+    border-radius:16px;
+    margin-bottom:10px;
+    font-size:14px;
+    line-height:1.4;
+    animation: pop .4s ease;
+}
+
+@keyframes pop{
+    from{transform:scale(0.9); opacity:0;}
+    to{transform:scale(1); opacity:1;}
+}
+
+.bot{
+    background:rgba(78,168,255,0.15);
+    border:1px solid rgba(78,168,255,0.2);
+}
+
+.user{
+    background:rgba(255,255,255,0.08);
+    margin-left:auto;
+    width:fit-content;
+}
+
+/* CTA */
+.buttons{
+    margin-top:15px;
+    display:flex;
+    gap:10px;
+}
+
+.btn{
+    flex:1;
+    text-align:center;
+    padding:12px;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:600;
+    transition:0.2s;
+}
+
+.primary{
+    background:#4ea8ff;
+    color:#08111f;
+}
+
+.primary:hover{
+    transform:translateY(-2px);
+}
+
+.secondary{
+    border:1px solid rgba(255,255,255,0.15);
+    color:white;
+}
+
+.secondary:hover{
+    background:rgba(255,255,255,0.06);
+}
+
+/* text left */
+.left{
+    position:absolute;
+    left:60px;
+    max-width:400px;
+}
+
+.left h1{
+    font-size:54px;
+    margin-bottom:15px;
+}
+
+.left p{
+    color:#aab2c5;
+    line-height:1.7;
+}
+
+@media(max-width:900px){
+    .left{display:none;}
+}
+</style>
+</head>
+
+<body>
+
+<div class="blob"></div>
+<div class="blob"></div>
+
+<div class="wrapper">
+
+    <!-- LEFT TEXT -->
+    <div class="left">
+        <h1>SurveyBot</h1>
+        <p>
+            Интерактивные опросы внутри Telegram.<br><br>
+            Пользователь не просто отвечает - он проходит опрос как обычный разговор в чате. Быстро и без лишних действий.
+        </p>
+    </div>
+
+    <!-- PHONE MOCK -->
+    <div class="phone">
+
+        <div class="header">
+            <div class="avatar"></div>
+            <div>
+                <div class="title">Бот Опросник</div>
+                <div class="subtitle">online • Telegram bot</div>
+            </div>
+        </div>
+
+        <div class="msg bot">Привет! Давай пройдём опрос 👇</div>
+        <div class="msg bot">Как тебя зовут?</div>
+        <div class="msg user">Алекс</div>
+        <div class="msg bot">Сколько тебе лет?</div>
+        <div class="msg user">19</div>
+        <div class="msg bot">Отлично! Готов продолжить 👍</div>
+
+        <div class="buttons">
+            <a class="btn primary" href="https://t.me/botsurveydemo_bot" target="_blank">
+                🚀 Пройти
+            </a>
+            <a class="btn secondary" href="https://kwork.ru/user/demurgas" target="_blank">
+                💼 Заказать
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>
