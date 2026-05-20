@@ -1,44 +1,30 @@
-from aiogram.types import (
-    ReplyKeyboardMarkup,
-    KeyboardButton,
-    InlineKeyboardMarkup,
-    InlineKeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+
+main_menu = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="Пройти опрос"), KeyboardButton(text="Мои ответы")],
+        [KeyboardButton(text="Контакты"), KeyboardButton(text="Админ-панель")],
+    ],
+    resize_keyboard=True
 )
 
+admin_menu = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="Создать опрос"), KeyboardButton(text="Статистика")],
+        [KeyboardButton(text="Главное меню")],
+    ],
+    resize_keyboard=True
+)
 
-def main_menu():
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="Пройти опрос")],
-            [KeyboardButton(text="Мои ответы")],
-            [KeyboardButton(text="Контакты")],
-            [KeyboardButton(text="Админ-панель")]
-        ],
-        resize_keyboard=True
-    )
+def surveys_inline(surveys: list) -> InlineKeyboardMarkup:
+    buttons = [
+        [InlineKeyboardButton(text=s[1], callback_data=f"survey_{s[0]}")]
+        for s in surveys
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
-
-def contacts_keyboard():
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="Связаться с разработчиком",
-                    url="https://t.me/your_username"
-                )
-            ]
-        ]
-    )
-
-
-def yes_no_keyboard():
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [
-                KeyboardButton(text="Да"),
-                KeyboardButton(text="Нет")
-            ]
-        ],
-        resize_keyboard=True,
-        one_time_keyboard=True
-    )
+def yesno_inline(question_id: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Да", callback_data=f"yesno_{question_id}_yes"),
+         InlineKeyboardButton(text="Нет", callback_data=f"yesno_{question_id}_no")]
+    ])
